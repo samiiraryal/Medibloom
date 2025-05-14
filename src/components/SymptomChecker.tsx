@@ -14,7 +14,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
-import { Loader2, AlertCircle, MapPin, Stethoscope, Sparkles, Pill, Leaf } from 'lucide-react';
+import { Loader2, AlertCircle, MapPin, Stethoscope, Sparkles, Pill, Leaf, Lightbulb, ClipboardList } from 'lucide-react';
 
 const symptomFormSchema = z.object({
   symptoms: z.string().min(10, { message: "Please describe your symptoms in at least 10 characters." }),
@@ -94,6 +94,15 @@ export default function SymptomChecker() {
       setIsLoadingRemedies(false);
     }
   };
+
+  let displayedRemedies = remedyResult?.remedies || [];
+  if (remedyResult && remedyResult.remedies && remedyResult.remedies.length > 1) {
+    const firstRemedy = remedyResult.remedies[0];
+    displayedRemedies = [...remedyResult.remedies.slice(1), firstRemedy];
+  } else if (remedyResult && remedyResult.remedies && remedyResult.remedies.length === 1) {
+    displayedRemedies = remedyResult.remedies;
+  }
+
 
   return (
     <div className="space-y-8 max-w-2xl mx-auto">
@@ -219,7 +228,7 @@ export default function SymptomChecker() {
         </Card>
       )}
 
-      {remedyResult && remedyResult.remedies && (
+      {remedyResult && displayedRemedies.length > 0 && (
         <Card className="shadow-lg">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-xl">
@@ -228,17 +237,50 @@ export default function SymptomChecker() {
             </CardTitle>
             <CardDescription>These are suggestions and not medical advice. Consult a healthcare professional for any health concerns.</CardDescription>
           </CardHeader>
+          <CardContent className="space-y-6">
+            {displayedRemedies.map((remedy, index) => (
+              <div key={index} className="p-4 border rounded-md bg-secondary/50 shadow">
+                <h4 className="font-semibold text-lg text-accent">{remedy.name}</h4>
+                <p className="mt-2 text-secondary-foreground whitespace-pre-wrap">{remedy.explanation}</p>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+      {remedyResult && !displayedRemedies.length && !remedyResult.optionalIngredients?.length && (
+         <Card className="shadow-lg">
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-xl">
+                <Leaf className="h-6 w-6 text-accent" />
+                Recommended Home Remedies
+                </CardTitle>
+            </CardHeader>
+            <CardContent>
+                <p className="text-muted-foreground">No specific remedies could be suggested for your symptoms and location. Please consult a healthcare professional.</p>
+            </CardContent>
+        </Card>
+      )}
+
+
+      {remedyResult && remedyResult.optionalIngredients && remedyResult.optionalIngredients.length > 0 && (
+        <Card className="shadow-lg">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-xl">
+              <Lightbulb className="h-6 w-6 text-primary" />
+              Optional Ingredient Considerations
+            </CardTitle>
+            <CardDescription>These are less common ingredients that might be worth considering if available, based on your symptoms and location.</CardDescription>
+          </CardHeader>
           <CardContent className="space-y-4">
-            {remedyResult.remedies.length > 0 ? (
-              remedyResult.remedies.map((remedy, index) => (
-                <div key={index} className="p-4 border rounded-md bg-secondary/50">
-                  <h4 className="font-semibold text-lg text-accent">{remedy.name}</h4>
-                  <p className="mt-2 text-secondary-foreground whitespace-pre-wrap">{remedy.explanation}</p>
-                </div>
-              ))
-            ) : (
-              <p className="text-muted-foreground">No specific remedies could be suggested for your symptoms and location. Please consult a healthcare professional.</p>
-            )}
+            {remedyResult.optionalIngredients.map((ingredient, index) => (
+              <div key={index} className="p-4 border rounded-md bg-secondary/50 shadow">
+                <h4 className="font-semibold text-lg text-primary">{ingredient.name}</h4>
+                <p className="mt-1 text-sm text-muted-foreground whitespace-pre-wrap">{ingredient.reasoning}</p>
+                {ingredient.availabilityNote && (
+                  <p className="mt-1 text-xs italic text-muted-foreground">Note: {ingredient.availabilityNote}</p>
+                )}
+              </div>
+            ))}
           </CardContent>
         </Card>
       )}
