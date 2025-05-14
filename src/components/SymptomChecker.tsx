@@ -13,7 +13,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
-import { Loader2, AlertCircle, MapPin, Stethoscope, Sparkles, Pill } from 'lucide-react';
+import { Loader2, AlertCircle, MapPin, Stethoscope, Sparkles, Pill, Leaf } from 'lucide-react';
 
 const symptomFormSchema = z.object({
   symptoms: z.string().min(10, { message: "Please describe your symptoms in at least 10 characters." }),
