@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -9,7 +10,7 @@
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import {z}from 'genkit';
 
 const RemedyRecommendationInputSchema = z.object({
   symptoms: z
@@ -20,11 +21,16 @@ const RemedyRecommendationInputSchema = z.object({
 });
 export type RemedyRecommendationInput = z.infer<typeof RemedyRecommendationInputSchema>;
 
+const RemedySchema = z.object({
+  name: z.string().describe('The name of the home remedy.'),
+  explanation: z.string().describe('A detailed explanation of the remedy, including its purpose, how to prepare it, and how to use it. Mention ingredient availability based on the user\'s location if relevant.'),
+});
+
 const RemedyRecommendationOutputSchema = z.object({
   remedies: z
-    .string()
+    .array(RemedySchema)
     .describe(
-      'A list of recommended home remedies based on the symptoms, location, and possible conditions.'
+      'A list of recommended home remedies, each with a name and detailed explanation.'
     ),
 });
 export type RemedyRecommendationOutput = z.infer<typeof RemedyRecommendationOutputSchema>;
@@ -44,12 +50,36 @@ const prompt = ai.definePrompt({
   Possible Conditions: {{{possibleConditions}}}
 
   Recommend home remedies that are suitable for the user's location and symptoms, drawing from both traditional and modern medical knowledge.
-  Consider the availability of ingredients in the specified location.
-  Provide a detailed explanation of each recommended remedy, including its purpose and how it addresses the symptoms and possible conditions.
+  Consider the availability of ingredients in the specified location when relevant for a remedy.
+  Provide a detailed explanation of each recommended remedy, including its purpose, how to prepare it, and how it addresses the symptoms and possible conditions.
   Ensure the remedies are safe and effective.
 
-  Format your response as a list of remedies with explanations for each remedy.
+  Format your response as a JSON object with a "remedies" key. The value of "remedies" should be an array of objects, where each object has the following structure:
+  {
+    "name": "Name of the remedy",
+    "explanation": "Detailed explanation of the remedy, including purpose, preparation, usage instructions, and any notes on ingredient availability for the location: {{{location}}}."
+  }
   `,
+  config: {
+    safetySettings: [
+      {
+        category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
+        threshold: 'BLOCK_ONLY_HIGH',
+      },
+       {
+        category: 'HARM_CATEGORY_HARASSMENT',
+        threshold: 'BLOCK_MEDIUM_AND_ABOVE',
+      },
+      {
+        category: 'HARM_CATEGORY_HATE_SPEECH',
+        threshold: 'BLOCK_MEDIUM_AND_ABOVE',
+      },
+      {
+        category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
+        threshold: 'BLOCK_MEDIUM_AND_ABOVE',
+      },
+    ],
+  }
 });
 
 const remedyRecommendationFlow = ai.defineFlow(
@@ -60,6 +90,9 @@ const remedyRecommendationFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await prompt(input);
-    return output!;
+    if (!output) {
+      throw new Error("Failed to get remedy recommendations from AI.");
+    }
+    return output;
   }
 );

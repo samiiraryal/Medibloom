@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, type FormEvent } from 'react';
@@ -218,7 +219,7 @@ export default function SymptomChecker() {
         </Card>
       )}
 
-      {remedyResult && (
+      {remedyResult && remedyResult.remedies && (
         <Card className="shadow-lg">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-xl">
@@ -227,10 +228,17 @@ export default function SymptomChecker() {
             </CardTitle>
             <CardDescription>These are suggestions and not medical advice. Consult a healthcare professional for any health concerns.</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="p-4 border rounded-md bg-secondary/50 whitespace-pre-wrap text-secondary-foreground">
-              {remedyResult.remedies}
-            </div>
+          <CardContent className="space-y-4">
+            {remedyResult.remedies.length > 0 ? (
+              remedyResult.remedies.map((remedy, index) => (
+                <div key={index} className="p-4 border rounded-md bg-secondary/50">
+                  <h4 className="font-semibold text-lg text-accent">{remedy.name}</h4>
+                  <p className="mt-2 text-secondary-foreground whitespace-pre-wrap">{remedy.explanation}</p>
+                </div>
+              ))
+            ) : (
+              <p className="text-muted-foreground">No specific remedies could be suggested for your symptoms and location. Please consult a healthcare professional.</p>
+            )}
           </CardContent>
         </Card>
       )}
